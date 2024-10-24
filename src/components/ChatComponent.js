@@ -3,6 +3,7 @@ import axios from 'axios';
 import "./ChatComponent.css";
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { marked } from "marked";
+import Popup from './ChatPopup.js';
 
 const ChatComponent = () => {
   const [participationId, setParticipationId] = useState(null);
@@ -10,8 +11,8 @@ const ChatComponent = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [userMessage, setUserMessage] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const participationUrl = 'https://staging.juji-inc.com/pre-chat/67196aae-c4b8-44d5-adbe-1f27bcf33f9b'
+  const [isOpen, setIsOpen] = useState(false);
+  const [participationUrl, setParticipationUrl] = useState('https://staging.juji-inc.com/pre-chat/67196aae-c4b8-44d5-adbe-1f27bcf33f9b')
 
   const messagesEndRef = useRef(null);
 
@@ -22,7 +23,38 @@ const ChatComponent = () => {
       }, 0);
   };
 
+  const changeChat = (url) => {
+    console.log("resetChat", url)
+    setLoading(true)
+    setChatMessages([])
+    setParticipationUrl(url)
+    createParticipation(url, 'User')
+      .then(chatInfo => {
+        const client = new W3CWebSocket(chatInfo.websocketUrl);
+        setWsClient(client);
+        setParticipationId(chatInfo.participationId);
+
+        client.onopen = () => {
+          console.log('WebSocket Client Connected');
+          initChat(client, chatInfo.participationId);
+        };
+
+        client.onmessage = message => {
+          onMessage(message.data);
+        };
+
+        client.onerror = error => {
+          console.error('WebSocket Error:', error);
+        };
+
+        client.onclose = () => {
+          console.log('WebSocket Client Closed');
+        };
+      });
+  }
+
   const resetChat = () => {
+    console.log("resetChat", participationUrl)
     setLoading(true)
     setChatMessages([])
     createParticipation(participationUrl, 'User')
@@ -51,7 +83,8 @@ const ChatComponent = () => {
   }
   
   useEffect(() => {
-    createParticipation(participationUrl, 'User')
+    if (participationUrl)
+    {createParticipation(participationUrl, 'User')
       .then(chatInfo => {
         const client = new W3CWebSocket(chatInfo.websocketUrl);
         setWsClient(client);
@@ -73,7 +106,7 @@ const ChatComponent = () => {
         client.onclose = () => {
           console.log('WebSocket Client Closed');
         };
-      });
+      });}
   }, []);
 
   const createParticipation = async (chatbotUrl, firstName) => {
@@ -238,10 +271,17 @@ const ChatComponent = () => {
 
   return (
     <div className="messages-container">
+      <button className="change-button" onClick={(e) =>
+             {setIsOpen(true)}}>
+              Change
+            </button>
        <button className="reset-button" onClick={(e) =>
              {resetChat()}}>
               Reset
             </button>
+            {isOpen && <Popup setIsOpen={setIsOpen} 
+            participationUrl={participationUrl} 
+            changeChat= {changeChat}/>}
           {chatMessages.map((message, index) => (
               <div>
                 <div key={index} className={`${message.role}-message-container`}>
