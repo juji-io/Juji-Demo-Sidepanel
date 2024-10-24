@@ -1,0 +1,4 @@
+node_modules
+.venv/
+build/
+python_service/utils/__pycache__/
