@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import "./ChatComponent.css";
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
@@ -10,10 +10,11 @@ const ChatComponent = () => {
   const [wsClient, setWsClient] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [userMessage, setUserMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [participationUrl, setParticipationUrl] = useState('https://staging.juji-inc.com/pre-chat/67196aae-c4b8-44d5-adbe-1f27bcf33f9b')
-
+  const [participationUrl, setParticipationUrl] = useState()
+  const [userName, setuserName] = useState("User");
+// https://staging.juji-inc.com/pre-chat/67196aae-c4b8-44d5-adbe-1f27bcf33f9b
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -23,12 +24,13 @@ const ChatComponent = () => {
       }, 0);
   };
 
-  const changeChat = (url) => {
+  const changeChat = (url, username) => {
     console.log("resetChat", url)
     setLoading(true)
     setChatMessages([])
     setParticipationUrl(url)
-    createParticipation(url, 'User')
+    setuserName(username)
+    createParticipation(url, username)
       .then(chatInfo => {
         const client = new W3CWebSocket(chatInfo.websocketUrl);
         setWsClient(client);
@@ -57,7 +59,7 @@ const ChatComponent = () => {
     console.log("resetChat", participationUrl)
     setLoading(true)
     setChatMessages([])
-    createParticipation(participationUrl, 'User')
+    createParticipation(participationUrl, userName)
       .then(chatInfo => {
         const client = new W3CWebSocket(chatInfo.websocketUrl);
         setWsClient(client);
@@ -82,32 +84,32 @@ const ChatComponent = () => {
       });
   }
   
-  useEffect(() => {
-    if (participationUrl)
-    {createParticipation(participationUrl, 'User')
-      .then(chatInfo => {
-        const client = new W3CWebSocket(chatInfo.websocketUrl);
-        setWsClient(client);
-        setParticipationId(chatInfo.participationId);
+  // useEffect(() => {
+  //   if (participationUrl)
+  //   {createParticipation(participationUrl, 'User')
+  //     .then(chatInfo => {
+  //       const client = new W3CWebSocket(chatInfo.websocketUrl);
+  //       setWsClient(client);
+  //       setParticipationId(chatInfo.participationId);
 
-        client.onopen = () => {
-          console.log('WebSocket Client Connected');
-          initChat(client, chatInfo.participationId);
-        };
+  //       client.onopen = () => {
+  //         console.log('WebSocket Client Connected');
+  //         initChat(client, chatInfo.participationId);
+  //       };
 
-        client.onmessage = message => {
-          onMessage(message.data);
-        };
+  //       client.onmessage = message => {
+  //         onMessage(message.data);
+  //       };
 
-        client.onerror = error => {
-          console.error('WebSocket Error:', error);
-        };
+  //       client.onerror = error => {
+  //         console.error('WebSocket Error:', error);
+  //       };
 
-        client.onclose = () => {
-          console.log('WebSocket Client Closed');
-        };
-      });}
-  }, []);
+  //       client.onclose = () => {
+  //         console.log('WebSocket Client Closed');
+  //       };
+  //     });}
+  // }, []);
 
   const createParticipation = async (chatbotUrl, firstName) => {
     const response = await axios.post(chatbotUrl, {'firstName': firstName });
@@ -287,8 +289,8 @@ const ChatComponent = () => {
                 <div key={index} className={`${message.role}-message-container`}>
                   {message.content && (
                       <div className={`message ${message.role}-message`}>
-                        <div className = "message-title">{message.role === "assistant" ? "Juji" : "User"}</div>
-                          <div dangerouslySetInnerHTML={{__html: marked(message.content).replace(/<p>|<\/p>/g, "")}}></div>
+                        <div className = "message-title">{message.role === "assistant" ? "Juji" : userName}</div>
+                          <div className = "line-1 anim-typewriter" dangerouslySetInnerHTML={{__html: marked(message.content).replace(/<p>|<\/p>/g, "")}}></div>
                       </div>
                   )}
               </div>
