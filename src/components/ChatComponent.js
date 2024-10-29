@@ -83,33 +83,7 @@ const ChatComponent = () => {
         };
       });
   }
-  
-  // useEffect(() => {
-  //   if (participationUrl)
-  //   {createParticipation(participationUrl, 'User')
-  //     .then(chatInfo => {
-  //       const client = new W3CWebSocket(chatInfo.websocketUrl);
-  //       setWsClient(client);
-  //       setParticipationId(chatInfo.participationId);
 
-  //       client.onopen = () => {
-  //         console.log('WebSocket Client Connected');
-  //         initChat(client, chatInfo.participationId);
-  //       };
-
-  //       client.onmessage = message => {
-  //         onMessage(message.data);
-  //       };
-
-  //       client.onerror = error => {
-  //         console.error('WebSocket Error:', error);
-  //       };
-
-  //       client.onclose = () => {
-  //         console.log('WebSocket Client Closed');
-  //       };
-  //     });}
-  // }, []);
 
   const createParticipation = async (chatbotUrl, firstName) => {
     const response = await axios.post(chatbotUrl, {'firstName': firstName });
