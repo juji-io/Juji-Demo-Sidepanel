@@ -106,9 +106,11 @@ const ChatComponent = () => {
             }
             display {
                 data {
+                    gid
                     questions {
                         heading
                         kind
+                        qid
                         wording
                         choices
                     }
@@ -150,7 +152,9 @@ const ChatComponent = () => {
           role: "assistant",
           content: chatData.display.data.questions[0].wording,
           choices: chatData.display.data.questions[0].choices,
-          type: "single-choice"
+          type: "single-choice",
+          gid: chatData.display.data.gid,
+          qid: chatData.display.data.questions[0].qid
         }]);
         scrollToBottom()
         setLoading(false)
@@ -184,6 +188,43 @@ const ChatComponent = () => {
     if (wsClient && participationId) {
       setLoading(true)
       sendChatMsg(wsClient, participationId, message);
+      scrollToBottom()
+      setUserMessage('');
+    }
+  };
+
+  const sendMoveMsg = (client, participationId, moveMsg) => {
+    const moveString = JSON.stringify(moveMsg)
+      .replace('"type"', 'type')
+      .replace('"text"', 'text')
+      .replace('"gid"', 'gid')
+      .replace('"question"', 'question')
+      .replace('"value"', 'value');
+
+    const mutationQuery = `
+    mutation {
+        saveChatMessage(input: {
+            type: "normal"
+            pid: "${participationId}"
+            move: ${moveString}
+        }) {
+            success
+        }
+    }`
+    client.send(mutationQuery);
+  };
+
+  const handleChoiceOptionButton = (choice_obj, message) => {
+    if (wsClient && participationId) {
+      setLoading(true)
+      const moveMsg = [{
+        type: "Action",
+        text: choice_obj.text,
+        value: choice_obj.value,
+        gid: message.gid,
+        question: message.qid
+      }]
+      sendMoveMsg(wsClient, participationId, moveMsg);
       scrollToBottom()
       setUserMessage('');
     }
@@ -230,12 +271,12 @@ const ChatComponent = () => {
             if (button.id === `choice-${index}`) {
               button.classList.toggle('choice-clicked');
             }
-            console.log(choice_obj.text)
+            console.log(choice_obj)
             setChatMessages(prevMessages => [...prevMessages, {
               role: "user",
               content: choice_obj.text
             }])
-            handleSendMessageButton(choice_obj.text)
+            handleChoiceOptionButton(choice_obj, message)
             // setUserMessage(option);
             //  handleSendMessage();
             }}
