@@ -4,6 +4,8 @@ import "./ChatComponent.css";
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { marked } from "marked";
 import Popup from './ChatPopup.js';
+import inspect from 'object-inspect';
+
 
 const ChatComponent = () => {
   const [participationId, setParticipationId] = useState(null);
@@ -194,23 +196,38 @@ const ChatComponent = () => {
   };
 
   const sendMoveMsg = (client, participationId, moveMsg) => {
-    const moveString = JSON.stringify(moveMsg)
-      .replace('"type"', 'type')
-      .replace('"text"', 'text')
-      .replace('"gid"', 'gid')
-      .replace('"question"', 'question')
-      .replace('"value"', 'value');
+    // manually remove the quotes from the string
+    // const moveString = JSON.stringify(moveMsg)
+    //   .replace('"type"', 'type')
+    //   .replace('"text"', 'text')
+    //   .replace('"gid"', 'gid')
+    //   .replace('"question"', 'question')
+    //   .replace('"value"', 'value');
+  
+    // const mutationQuery = `
+    // mutation {
+    //     saveChatMessage(input: {
+    //         type: "normal"
+    //         pid: "${participationId}"
+    //         move: ${moveString}
+    //     }) {
+    //         success
+    //     }
+    // }`
 
+    // use inspect to remove the quotes from the string
     const mutationQuery = `
-    mutation {
-        saveChatMessage(input: {
-            type: "normal"
-            pid: "${participationId}"
-            move: ${moveString}
-        }) {
-            success
-        }
-    }`
+      mutation {
+          saveChatMessage(input:{
+              type:"normal",
+              role:"user",
+              pid: "${participationId}",
+              move: ${inspect(moveMsg, { quoteStyle: 'double' })}
+          }) {
+              success
+          }
+      }`;
+
     client.send(mutationQuery);
   };
 
